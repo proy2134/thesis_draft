@@ -1,0 +1,97 @@
+%% Creator: Inkscape inkscape 0.92.4, www.inkscape.org
+%% PDF/EPS/PS + LaTeX output extension by Johan Engelen, 2010
+%% Accompanies image file 'full_yield.pdf' (pdf, eps, ps)
+%%
+%% To include the image in your LaTeX document, write
+%%   \input{<filename>.pdf_tex}
+%%  instead of
+%%   \includegraphics{<filename>.pdf}
+%% To scale the image, write
+%%   \def\svgwidth{<desired width>}
+%%   \input{<filename>.pdf_tex}
+%%  instead of
+%%   \includegraphics[width=<desired width>]{<filename>.pdf}
+%%
+%% Images with a different path to the parent latex file can
+%% be accessed with the `import' package (which may need to be
+%% installed) using
+%%   \usepackage{import}
+%% in the preamble, and then including the image with
+%%   \import{<path to file>}{<filename>.pdf_tex}
+%% Alternatively, one can specify
+%%   \graphicspath{{<path to file>/}}
+%% 
+%% For more information, please see info/svg-inkscape on CTAN:
+%%   http://tug.ctan.org/tex-archive/info/svg-inkscape
+%%
+\begingroup%
+  \makeatletter%
+  \providecommand\color[2][]{%
+    \errmessage{(Inkscape) Color is used for the text in Inkscape, but the package 'color.sty' is not loaded}%
+    \renewcommand\color[2][]{}%
+  }%
+  \providecommand\transparent[1]{%
+    \errmessage{(Inkscape) Transparency is used (non-zero) for the text in Inkscape, but the package 'transparent.sty' is not loaded}%
+    \renewcommand\transparent[1]{}%
+  }%
+  \providecommand\rotatebox[2]{#2}%
+  \newcommand*\fsize{\dimexpr\f@size pt\relax}%
+  \newcommand*\lineheight[1]{\fontsize{\fsize}{#1\fsize}\selectfont}%
+  \ifx\svgwidth\undefined%
+    \setlength{\unitlength}{504.94912254bp}%
+    \ifx\svgscale\undefined%
+      \relax%
+    \else%
+      \setlength{\unitlength}{\unitlength * \real{\svgscale}}%
+    \fi%
+  \else%
+    \setlength{\unitlength}{\svgwidth}%
+  \fi%
+  \global\let\svgwidth\undefined%
+  \global\let\svgscale\undefined%
+  \makeatother%
+  \begin{picture}(1,0.71298298)%
+    \lineheight{1}%
+    \setlength\tabcolsep{0pt}%
+    \put(0,0){\includegraphics[width=\unitlength,page=1]{full_yield.pdf}}%
+    \put(0.60572825,0.47590878){\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}\textbf{Dataset 1}\end{tabular}}}}%
+    \put(0.75452825,0.47590878){\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}\textbf{Dataset 2}\end{tabular}}}}%
+    \put(0.90332825,0.47590878){\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}\textbf{Dataset 3}\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=2]{full_yield.pdf}}%
+    \put(0.54509023,0.48278375){\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}\textbf{0}\end{tabular}}}}%
+    \put(0.54019231,0.55347248){\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}\textbf{50}\end{tabular}}}}%
+    \put(0.53529439,0.62416121){\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}\textbf{100}\end{tabular}}}}%
+    \put(0.53529439,0.69484994){\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}\textbf{150}\end{tabular}}}}%
+    \put(0.531287,0.50493){\rotatebox{90}{\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}\textbf{Percentage of Harvested Apple Counts}\end{tabular}}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=3]{full_yield.pdf}}%
+    \put(0.84068711,0.68887111){\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}\textbf{Summed apple counts from both sides(GMM)}\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=4]{full_yield.pdf}}%
+    \put(0.84068711,0.68114331){\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}\textbf{Summed counts from single sides(ResNet50)}\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=5]{full_yield.pdf}}%
+    \put(0.28878938,0.0546528){\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}\textbf{Dataset 1}\end{tabular}}}}%
+    \put(0.49042545,0.0546528){\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}\textbf{Dataset 2}\end{tabular}}}}%
+    \put(0.69206144,0.0546528){\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}\textbf{Dataset 3}\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=6]{full_yield.pdf}}%
+    \put(0.20770472,0.06490087){\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}\textbf{0}\end{tabular}}}}%
+    \put(0.20034162,0.10387783){\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}\textbf{50}\end{tabular}}}}%
+    \put(0.19297852,0.14285472){\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}\textbf{100}\end{tabular}}}}%
+    \put(0.19297852,0.18183161){\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}\textbf{150}\end{tabular}}}}%
+    \put(0.19297852,0.22080856){\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}\textbf{200}\end{tabular}}}}%
+    \put(0.19297852,0.25978545){\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}\textbf{250}\end{tabular}}}}%
+    \put(0.19297852,0.29876241){\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}\textbf{300}\end{tabular}}}}%
+    \put(0.19297852,0.3377393){\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}\textbf{350}\end{tabular}}}}%
+    \put(0.19297852,0.37671626){\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}\textbf{400}\end{tabular}}}}%
+    \put(0.19297852,0.41569315){\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}\textbf{450}\end{tabular}}}}%
+    \put(0.18695417,0.19994936){\rotatebox{90}{\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}\textbf{Apple Counts}\end{tabular}}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=7]{full_yield.pdf}}%
+    \put(0.25848782,0.40068777){\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}\textbf{Harvested apple counts from both sides}\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=8]{full_yield.pdf}}%
+    \put(0.25848782,0.38768312){\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}\textbf{Computed apple counts from both sides(GMM)}\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=9]{full_yield.pdf}}%
+    \put(0.25848782,0.37467846){\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}\textbf{Computed apple counts from both sides(ResNet50)}\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=10]{full_yield.pdf}}%
+    \put(0.25980128,0.44592485){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}(a)\end{tabular}}}}%
+    \put(0.75380031,0.44592531){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}(b)\end{tabular}}}}%
+    \put(0.49173987,0.00313305){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}(c)\end{tabular}}}}%
+  \end{picture}%
+\endgroup%

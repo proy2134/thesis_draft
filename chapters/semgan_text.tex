@@ -1,0 +1,452 @@
+In recent times, deep learning approaches have emerged as general and powerful techniques for solving several well-established problems in computer vision such as semantic segmentation~\cite{ronneberger_u-net:_2015}, object detection~\cite{russakovsky_imagenet_2015,lin_feature_2016}, instance segmentation~\cite{ren_faster_2015} and so on. These solutions though require a huge amount of training data and obtaining such data for many problems (e.g. fruit detection) is difficult. Synthetic data has the potential to eliminate the painstaking problem of data annotation. As we design the models ourselves, the labeling comes for free. In general, a network trained entirely on synthetic data does not perform well on actual data. Synthetic data differs from actual data on two different levels. First, it is tedious, time-consuming and close to impossible to design synthetic data that looks identical to the real data. Therefore, they differ at the image level. Second, modern deep convolutional networks learn their feature descriptors from data at multiple stages. Consequently, synthetic and real data can differ significantly at these levels as well. This is known as the feature level difference. These two difference together is defined as the domain gap. In this chapter, we present techniques for leveraging existing image to image translation solutions for reducing this domain gap between synthetic and real data.
+
+
+\begin{figure*}[!htbp]
+    \centering
+    \def\svgwidth{\textwidth}
+    \import{figures/semgan/}{intro.pdf_tex}
+    \caption[Overview of semantics aware image to image translation.]{Given two unpaired image collections and semantic label masks, our network learns a mapping to translate images from one domain to the other while preserving the labels. Top left: Object transfiguration task for circles to triangles. Top right: Image to image style transfer from Horses to Zebras. Bottom: Domain translation from synthetic GTA to Cityscapes photos. The examples show the CycleGAN~\cite{zhu_unpaired_2017} output, the image and mask outputs of our method. Note that CycleGAN does not output masks.}
+    \label{fig:intro}
+\end{figure*}
+
+What does it take for a computer to convert an image of a horse into an image of a zebra, or a photograph into a painting created by one of the masters of the Renaissance? Humans have no difficulty imagining such a transformation by changing the style, color or even geometry of objects while keeping the underlying semantics of the scene intact. We study this problem of capturing the composition of a set of images and changing these characteristics while keeping the semantics of the scene consistent.
+
+The task of finding a mapping to translate images from a source domain to a target domain is known as \emph{image to image translation}. Many problems in computer vision and computer graphics can be posed as a translation task. Semantic segmentation~\cite{eigen_predicting_2015}, image synthesis~\cite{xian_texturegan:_2018}, image coloring~\cite{zhang_colorful_2016} and image super-resolution~\cite{ledig_photo-realistic_2017} are all examples where we try to find an intrinsic mapping between two related domains. Years of research have produced a variety of algorithms to tackle this problem when data pairing the images from the two domains is available~\cite{eigen_predicting_2015, isola_image--image_2016, wang_video--video_2018, xian_texturegan:_2018}. However, obtaining such paired data requires extensive annotation efforts, which are time-consuming and expensive.
+
+Unsupervised image to image translation makes the collection of such image pairs unnecessary. The goal of unsupervised image to image translation is to estimate a mapping $F$ from a source domain $X$ to a target domain $Y$, based on independently sampled data instances $x_i \in X$ and $y_i \in Y$, such that the distribution of the mapped instances $F(x_i)$ matches the probability distribution $P_y$ of the target domain. Generative Adversarial Networks (GANs)~\cite{goodfellow_generative_2014} have emerged as powerful image transformers. These networks treat image-to-image translation as an adversarial process, where two models are trained simultaneously: A generator representing the mapping $F: X \to Y$, and a discriminator $D_y$ that estimates a probability of the sample being generated from the training data instead of $F$. Using variations of this approach, recent work has produced visually appealing results for mapping realistic photos to paintings~\cite{zhu_unpaired_2017, yi_dualgan:_2017, tomei_art2real:_2018}, semantic segmentation maps to photos~\cite{karacan_learning_2016, wang_high-resolution_2018}, and single image super-resolution~\cite{ledig_photo-realistic_2017}. 
+
+
+State-of-the-art image to image translation methods fail when the mapping function includes significant geometric changes~\cite{zhu_unpaired_2017}. For example, if the transformation requires mapping squares to skinny triangles.
+This failure is because these methods do not take the underlying representation of the scene into consideration, and therefore make arbitrary changes to the appearance and geometry of the input. While this approach can be acceptable for image style transfer for artistic purposes, it is insufficient when the relationship between an image and its semantic labels needs to be preserved - such as in the case of domain adaptation or semantic segmentation. In this chapter, we show that by preserving the class labels during the translation process we can improve the performance of existing semantic segmentation networks and generate qualitatively improved outputs.
+Toward this goal, we present a method that can leverage semantic class label maps. We present \emph{SemGAN,} an encoder-decoder based generator architecture that can translate both the input image and corresponding semantic label map to the target domain simultaneously. The generator is divided into an encoder to jointly encode image and class information and two decoders to generate the target image and class labels. The discriminator operates on the joint encoding of the image and class labels. For object transfiguration tasks, we propose an additional loss term that encourages image background preservation.
+
+\section{Semantic-Aware GAN}\label{sec:formulation}
+\begin{figure*}[!hbpt]
+    \centering
+    \def\svgwidth{\textwidth}
+    \import{figures/semgan/}{overview.pdf_tex}
+    \caption[Schematic diagram of semantic-aware Generative Adversarial Network (GAN)]{ (a) Our model learns two mapping functions $F: (\mathcal{X \times C_X}) \to (\mathcal{Y \times C_Y})$ and $G: (\mathcal{Y \times C_Y}) \to (\mathcal{X \times C_X})$ together with the associated adversarial discriminators $D_X$ and $D_Y$. $D_X$ encourages F to translate images and masks to be indistinguishable from samples in domain $(\mathcal{Y \times C_Y})$ and vice versa for $D_X$ and G. (b) We use an encoder $F_E$ to encode the stacked image and the semantic map. The latent representations are decoded separately in $F_{D_x}$ and $F_{D_c}$ to get a translated representation $(\widehat{x_i},\widehat{c(x_i)}) = F(x_i, c(x_i))$. (c) An example object transfiguration task where our network translates squares into triangles while preserving the background and maintaining the consistency between the mask and the image.}
+    \label{fig:overview_semgan}
+\end{figure*}
+
+Given, two image domains $\mathcal{X}, \mathcal{Y}$, and unpaired training samples $\{x_i\}_{i=1}^N, \{y_j\}_{j=1}^M$ where $x_i\in \mathcal{X}, y_j \in \mathcal{Y}$, unsupervised image to image translation aims to learn a mapping $F:\mathcal{X}\to\mathcal{Y}$ between the two domains. Let $x,y$ denote the sample distributions from $\mathcal{X},\mathcal{Y}$ (i.e. $x\sim p_{data}(\mathcal{X}), y \sim p_{data}(\mathcal{Y})$). The goal of the mapping is to fool an adversarial discriminator $D_Y$ so that it cannot distinguish between $\{F(x)\}$ and $\{y\}$. In other words, the objective of the mapping is to fool the discriminator into thinking that $F(x) \sim p_{data}(\mathcal{Y})$.
+
+In this work, we extend the formulation of unsupervised image to image translation to contain semantic information as well. Our goal is to learn a transfer function to jointly translate an image and its underlying semantics. Let each image in  domains $\mathcal{X}$ and $\mathcal{Y}$ be associated with a class map $\mathcal{C_X}$ and $\mathcal{C_Y}$, where each pixel in these class maps belongs to one and only one of the classes $C_1, ..., C_k$. Accordingly, their joint distributions can be represented by $\left(\mathcal{ X \times C_X}\right)$ and $\left(\mathcal{Y \times C_Y}\right)$.  Given independently sampled images and corresponding class labels $\{x_i,c(x_i)\}_{i=1}^N, \{y_j,c(y_j)\}_{j=1}^M$ where  $(x_i,c(x_i)) \in \left(\mathcal{ X \times C_X}\right), (y_j,c(y_j)) \in \left(\mathcal{ Y \times C_Y}\right)$, our goal is to learn a transfer function $F:\left(\mathcal{ X \times C_X}\right) \to \left(\mathcal{ Y \times C_Y}\right)$ that fools an adversarial discriminator $D_Y$, presuming $\{F(x,c(x))\} \sim p_{data}(\mathcal{ Y \times C_Y})$. Our objective contains the standard adversarial and cycle-consistency loss proposed by~\cite{goodfellow_generative_2014, zhu_unpaired_2017} and we add task specific losses for \textit{object transfiguration} and \textit{cross domain semantic consistency}. 
+
+\subsection{Sem-GAN Architecture:}
+The GAN formulation is a two network minimax game. The generator ($F$) is trying to minimize $D_Y(F(x,c(x))$ -the probability of the generated samples being adjudicated fake by the discriminator. At the same time, the discriminator $D_Y$ is trying to maximize the probability of detecting the real samples $D_Y(y,c(y))$. 
+
+CycleGAN can be extended with an additional channel to handle semantic information. However, this extension cannot use the additional semantic information and suffers from similar visual artifacts as the original algorithm. We illustrate the deficiencies of this design with examples in Fig.~\ref{fig:extra_channel}.
+
+\begin{figure*}[!hbpt]
+    \centering
+    \def\svgwidth{\textwidth}
+        \import{figures/semgan/}{cyclegan_extra_channel.pdf_tex}
+    \caption[Failure of trivial extension of CycleGAN]{The trivial extension of adding an extra channel in CycleGAN results in erroneous semantic translations. The network generates values between $0-255$ for both the target image and its mask, it generates arbitrary semantic labels for both binary (top row: translation from square to triangle/ circle to triangle) and multi-class (middle row: GTA$\to$ Cityscape, bottom row: Cityscape $\to$ GTA) test cases. Additionally, this technique is incapable of using the extra information available from the semantic labels and it produces similar visual artifacts like CycleGAN itself. Note that, for the GTA$\leftrightarrow$ Cityscapes examples in the figure, only four classes were used (people, road, car and ignore label).}
+    \label{fig:extra_channel}
+\end{figure*}
+
+For the generator $F$ we use an encoder-decoder architecture. $F$ consists of three networks - an encoder $F_E$ which jointly encodes the image and underlying semantics, a decoder $F_{D_{x}}$ for generating the image and another decoder $F_{D_{c}}$ for generating the semantic labels. The discriminator is a single network that encodes the image and class labels jointly and outputs the probability of the sample under observation being real. 
+
+Optimizing this adversarial objective is difficult and can lead to mode collapse (all inputs are mapped to a single output)~\cite{goodfellow_generative_2014}. To avoid this problem, CycleGAN~\cite{zhu_unpaired_2017} proposed a cyclic consistency loss. In cyclic consistency, two mappings $F(\mathcal{X} \to \mathcal{Y})$ and $G(\mathcal{Y} \to \mathcal{X})$ are learned simultaneously. Enforcing this cyclic consistency encourages $(F(G(x) \approx x$ and $G(F(y)) \approx y)$, adds more structure to the objective and avoids mode collapse. We leverage this approach while building Sem-GAN. We train two coupled mappings $F:\left(\mathcal{ X \times C_X}\right) \to \left(\mathcal{ Y \times C_Y}\right)$, $G:\left(\mathcal{ Y \times C_Y}\right) \to \left(\mathcal{ X \times C_X}\right)$ and two discriminators $D_X, D_Y$ simultaneously. To align the joint distribution of the images and underlying semantics of source and target domain, the cycle loss terms are augmented with task specific losses. 
+
+\subsection{Adversarial Loss}\label{subsec:advloss}
+The GAN framework is a minimax game where the discriminator plays the adversarial role by distinguishing between samples of the target distribution and the ones being produced by the generator. We apply the standard adversarial loss for GAN networks~\cite{goodfellow_generative_2014} to both mappings. Fo the mapping $F:\mathcal{ X \times C_X} \to \mathcal{ Y \times C_Y}$ the loss is expressed as:
+
+\begin{equation}
+\begin{aligned}
+\mathcal{L}_{Adv}(F, D_Y, \mathcal{ X \times C_X}, \mathcal{ Y \times C_Y}) =\\ \mathbb{E}_{\left(y,c(y)\right) \sim p_{data}\left(\mathcal{ Y \times C_Y}\right)}[\log(D_Y(y,c(y)))] \\ 
++ \mathbb{E}_{\left(y,c(y)\right) \sim p_{data}\left(\mathcal{ X \times C_X}\right)} [1-\log(D_Y(F(x,c(x))))]
+\end{aligned}
+\label{eq:lossadv}
+\end{equation}
+
+$F$ tries to minimize this objective by generating images and semantic labels $F(x,c(x))$ that look similar to instances from the target domain. Simultaneously, $D_Y$ strives to maximize this objective to distinguish between the generated samples and the real ones. This leads to the optimization objective:  
+$\min_F \max_{D_Y} \mathcal{L}_{Adv}(F, D_Y, \mathcal{X \times C_X}, \mathcal{Y \times C_Y})$. 
+Similarly, for $G$ we define the objective as $\min_G \max_{D_X} \mathcal{L}_{Adv}(G, D_X, \mathcal{Y \times C_Y}, \mathcal{X \times C_X})$. 
+
+\subsection{Cycle Consistency Loss}\label{subsec:cycleloss}
+To add additional structure to our objective, we enforce cyclic consistency following CycleGAN~\cite{zhu_unpaired_2017}. CycleGAN enforces consistency across the two mappings $f,G$ using $L_1$ norm between the original and the reconstructed image $||G(F(x)) - x||_1$. As our formulation includes images as well as semantic labels we need to account for the classification loss as well. We define the standard cross-entropy loss for multi-class classification as:
+
+\begin{equation}
+\mathcal{C}(C_X,t_x,c(x)) = -\sum_{k=1}^{C_X}\mathds{1}_{k=t_x}\log c(x)
+\label{eq:losscrossentropy}
+\end{equation}
+
+where, $C_X$ is the total number of classes, $t_x$ is the ground truth class label and $c(x)$ is the predicted outcome. Let $F(x,c(x)) = (\hat{y},\hat{c_y}), G(\hat{y},\hat{c_y}) = (\hat{x},\hat{c_x})$ and $G(y,c(y)) = (\hat{x},\hat{c_x}), F(\hat{x},\hat{c_x}) = (\hat{y},\hat{c_y})$. Given this we can define cyclic consistency across images and semantic labels as: 
+\begin{equation}
+\begin{aligned}
+\mathcal{L}_{Cyc}(F, G) = \mathbb{E}_{(x,c(x)) \sim p_{data}(\mathcal{X \times C_X})}[||x- \hat{x}||_1 \\ + \mathcal{C}(C_X,c(x),\hat{c_x})]  + \mathbb{E}_{(y,c(y)) \sim p_{data}(\mathcal{Y \times C_Y})}[||y-\hat{y}||_1 \\ + \mathcal{C}(C_Y,c(y),\hat{c_y})] 
+\end{aligned}
+\label{eq:losscyclic}
+\end{equation}
+
+
+\subsection{Object Transfiguration Loss}\label{subsec:idtloss}
+For many object transfiguration tasks (such as from triangle to circles), it is intuitive that the color component of the translated objects and the background are preserved. 
+To enforce similar color composition we follow~\cite{zhu_unpaired_2017,taigman_unsupervised_2016} and add an \textit{identity loss} term $\mathcal{L}_{Idt}$ to our objective. This term encourages the generator to be an identity mapping when samples of the target domain are provided as input. 
+Let $F(y,c(y)) = (\hat{y},\hat{c_{y}})$ and $G(x,c(x)) = (\hat{x},\hat{c_{x}})$. With this notation, we define the identity loss as:
+
+\begin{equation}
+\begin{aligned}
+\mathcal{L}_{Idt}(F, G) = \mathbb{E}_{(y,c(y) \sim p_{data}(\mathcal{Y \times C_Y})}[||y- \hat{y}||_1 \\ + \mathcal{C}(C_Y,c(y),\hat{c_y})]  + \mathbb{E}_{(x,c(x)) \sim p_{data}(\mathcal{X \times C_X})}[||x - \hat{x}||_1 \\ + \mathcal{C}(C_X,c(x),\hat{c_x})] 
+\end{aligned}
+\label{eq:lossidt}
+\end{equation}
+
+To preserve the background or other semantic elements in the image we introduce a \textit{class preserving loss}. Let $c$ be the number of semantic categories we want to translate and $W_x, W_{\hat{y}}$ be the corresponding semantic pixel masks for these categories in the source and translated image. Then $W_{x\hat{y}} = \overline {W_x \cup W_{\hat{y}}}$ represents a pixel-map where the source and translated image have similar content. Let $F(x,c(x)) = (\hat{y},\hat{c_y})$ and $G(y,c(y)) = (\hat{x},\hat{c_x})$. Assuming this masks are denoted by $W_{x\hat{y}},W_{y\hat{x}}$ for $F,G$, we define the class preserving loss as:
+
+\begin{equation}
+\begin{aligned}
+\mathcal{L}_{Cls}(F, G) = \mathbb{E}_{(x,c(x)) \sim p_{data}(\mathcal{X \times C_X})}W_{x\hat{y}}\odot[||x - \hat{y}||_1]  \\+ \mathbb{E}_{(y,c(y)) \sim p_{data}(\mathcal{Y \times C_Y})}W_{y\hat{x}}\odot||y- \hat{y}||_1 ] 
+\end{aligned}
+\label{eq:lossclasspreseve}
+\end{equation}
+
+\subsection{Cross-Domain Semantic Consistency Loss}
+For domain translation applications it is desired that the underlying geometry of the environment is preserved in the translation process. To encourage preserving geometry in such cases we add a \textit{cross domain semantics preservation loss} term to our objective. Let $F(x,c(x)) = (\hat{y},\hat{c_y})$ and $G(y,c(y)) = (\hat{x},\hat{c_x})$. W define the cross-domain semantic consistency term as: 
+
+\begin{equation}
+\begin{aligned}
+\mathcal{L}_{Sem}(F, G) = \mathbb{E}_{(x,c(x)) \sim p_{data}(\mathcal{X \times C_X})}[ \mathcal{C}(C_X,c(x),\hat{c_y})]  \\+ \mathbb{E}_{(y,c(y)) \sim p_{data}(\mathcal{Y \times C_Y})}[ \mathcal{C}(C_Y,c(y),\hat{c_x})] 
+\end{aligned}
+\label{eq:losssem}
+\end{equation}
+
+\subsection{The Objective Function}
+Our full objective is:
+
+\begin{equation}
+\begin{aligned}
+\mathcal{L}(F, G,D_X,D_Y) = \mathcal{L}_{Adv}(F, D_Y, \mathcal{ X \times C_X}, \mathcal{ Y \times C_Y}) + \\ \mathcal{L}_{Adv}(G, D_X, \mathcal{ Y \times C_Y}, \mathcal{ X \times C_X}) + \lambda_{Cyc}\mathcal{L}_{Cyc}(F, G) +\\ \lambda_{Idt}\mathcal{L}_{Idt}(F, G) + \lambda_{Cls}\mathcal{L}_{Cls}(F, G)+\\ \lambda_{Sem}\mathcal{L}_{Sem}(F, G)
+\end{aligned}
+\label{eq:fullobjective}
+\end{equation}
+, where $\lambda$ controls the relative importance of the different losses. Our target is to solve:
+\begin{equation}
+G^*, F^* = \arg \min_{G,F} \max_{D_X, D_Y}\mathcal{L}(G,F,D_X, D_Y)
+\end{equation}
+In Section~\ref{sec:rexperiments} we compare our method against ablations of full objective. 
+
+
+
+
+
+
+
+\section{Implementation}\label{sec:implementation}
+In this section, we provide the details of our network architecture, training process, and parameters.
+\subsection{ Network Architecture}
+Our implementation is based on the PyTorch~\cite{paszke_automatic_2017} version of Cycle-GAN~\cite{zhu_unpaired_2017}. In particular, we used building blocks from the  ResNet 9-blocks generator. Our generator contains downsampling and residual blocks in the encoder and upsampling blocks in the decoders. Many previous implementations used standard deconvolution layers which lead to checkerboard effects (Fig.~\ref{fig:geomaquality}, column 3). We replace the deconvolution layers with upsampling layers and regular convolutions. We stacked the images and semantic maps together as network inputs. Before stacking, the semantic maps were converted to one-hot encoding and normalized to the same range as the images ($[-1,1]$). As a result, the dimension of our input varies depending on the total number of classes in a particular domain. For an image with dimension,$m\times n$ and number of classes $k$ the dimension of the input is $m \times n \times k$. For the activation layers of the two decoders (image and semantic labels), we used $\tanh$ and soft-max non-linearities respectively. 
+
+For the discriminator, we used the  $70\times 70$ PatchGAN ~\cite{isola_image--image_2016} network. Again, for input to the discriminator, we stacked the images and semantic maps together with proper normalization.
+
+\subsection{Training Details and Parameters} 
+All networks used in this work were trained on a single machine containing two NVIDIA Tesla K20X GPUs, each with $12$ GB of memory. We used Adam optimizer with the same initial learning rate of $0.0002$. The discriminator was trained with a history of the last $50$ images. We applied Instance Normalization to both the generator and discriminator and for all the experiments, the networks were trained up to $200$ epochs. For object transfiguration tasks, $\lambda_{Sem}$ was set to zero to remove cross-domain consistency. Similarly, for domain translation tasks $\lambda_{Cls}$ was set to zero to turn off class preserving loss. We used $\lambda_{Cyc} =10, \lambda_{Idt}=10$ for all the experiments.
+
+Similar to CycleGAN, we replace the negative log-likelihood term in $\mathcal{L}_{Adv}$ (\eqref{eq:lossadv}) with a least-square loss.
+
+
+
+
+
+\section{Experimental Results}\label{sec:rexperiments}
+We study the effectiveness of our approach for several object transfiguration and domain translation tasks. For image to image translation, we compare our approach to two state-of-the-art techniques (CycleGAN~\cite{zhu_unpaired_2017}, InstaGAN~\cite{mo_instance-aware_2019}). For domain translation, we compare our approach both qualitatively and quantitatively against CycleGAN. Besides, we conduct qualitative and quantitative ablation studies for both these tasks. The PyTorch code and data are available at \url{https://github.umn.edu/RSN/iccv2019_semGAN}. We start with the datasets in the next section.
+
+\subsection{Datasets}
+ We used four datasets for our experiments, two for qualitative verification of object transfiguration: the shape dataset, and the COCO dataset~\cite{lin2014microsoft} and two other datasets for domain transfer experiments: apple dataset and Grad Theft Auto (GTA)~\cite{gta} and CityScapes~\cite{cordts2016cityscapes}.
+ 
+ \subsubsection{Shapes Dataset}
+ To evaluate image to image translations involving significant geometric changes, we created a dataset by overlaying basic geometric shapes (circle, triangle, and square) of arbitrary colors on randomly chosen images from the COCO~\cite{lin2014microsoft} dataset. Each dataset contains a random number ($1-10$) of one type of geometric object. We created three of these datasets for circles, triangles, and squares. Each dataset contains $1000$ training images and $50$ test images. Semantic and instance level information is available for all the datasets.
+ 
+ \subsubsection{Animals Dataset}
+ To evaluate image to image translation in more practical scenarios we created datasets involving transfiguration between animals. To create these datasets, we sample two classes of animals from the COCO dataset. We treat these two classes as two different domains. The datasets we created are Horse$\leftrightarrow$Zebra, Sheep$\leftrightarrow$Giraffe, and Elephants$\leftrightarrow$Zebra. Each dataset contains $1000$ training images and $200$ test images. Semantic and instance level information is available for all the datasets.
+ 
+ 
+ \subsubsection{Apple Dataset}
+ One of the main motivation for this study was to eliminate data annotation for fruit detection. To evaluate the effectiveness of our developed method for this purpose we created two datasets containing red and green apples. Each dataset contains $2000$ training images and $500$ test images. Semantic level information is available for both datasets. 
+ 
+ \subsubsection{GTA and Cityscapes Dataset}
+ To evaluate our method in domain transfer scenarios involving multiple classes, we used two well-established datasets for autonomous driving: the GTA and Cityscapes datasets. The Cityscapes dataset has fine semantic level information available for only $5000$ training images. In comparison, the GTA dataset contains $29000$ training images with semantic level information. Therefore, we randomly sampled $5000$ images from it. Our train, test, and validation set for each dataset contained $2975,1525, 500$ images respectively.
+
+
+Due to resource constraints, we relied on down-sampled versions of the original datasets for training. Specifically, we used image size $256 \times 512$ pixels for the GTA $\leftrightarrow$ Cityscapes experiments, image size $128 \times 128$ pixels for the shape transformation experiments and image size $256 \times 256$ pixels for the anecdotal animal transformation experiments.
+
+
+
+
+\subsection{Object Transfiguration Results}
+For object transfiguration, each network has to transform all foreground objects in the image to another category (e.g Circle$\to$ Triangle). The goal is to only change the shape and keep the original color composition and image background intact.
+We compare our method against the following state-of-the-art techniques on the shapes and animals datasets:\\\\
+\textbf{CycleGAN~\cite{zhu_unpaired_2017}} is a method for general-purpose unpaired image to image translation that leverages cyclic consistency. Many image to image translation techniques, including ours follow the architecture of this method. It does not use any underlying semantic information. \\
+\textbf{InstaGAN~\cite{mo_instance-aware_2019}} is a method for object transfiguration with instance-level information. This approach has access to class label maps as well as instance information. It should outperform our method. During our experiments, InstaGAN took an extremely long time to train and we could not finish training for the horse to zebra translation task.
+
+\begin{figure}[!hbpt]
+    \centering
+    \def\svgwidth{\columnwidth}
+    \import{figures/semgan/}{geometry_quality.pdf_tex}
+    \caption[Qualitative comparison of CycleGAN, InstaGAN and our method on the shapes dataset.]{Qualitative comparison of CycleGAN, InstaGAN and our method on the task of transforming circles into triangles (top two rows), squares into triangles (center two rows) and squares into circles (bottom two rows). InstaGAN translation of the label masks in the Squares $\to$ Triangle case (center rows) leads to mode collapse.}
+    \label{fig:geomaquality}
+\end{figure}
+
+
+On the shapes dataset, our approach outperforms CycleGAN on all three transfiguration tasks. As CycleGAN does not have any access to semantic information, it is not aware of which semantic objects to translate and often leaves the objects unchanged. Fig.~\ref{fig:geomaquality} (first row, column three) shows one such example. It is also inconsistent regarding background preservation. InstaGAN performs poorly on two out of the three tasks. For translation from Square $\leftrightarrow$ Triangle, InstaGAN suffers from mode collapse. For the Square $\to$ Circle translation task, it performs comparably to our approach. Fig.~\ref{fig:geomaquality} shows a few qualitative comparisons.
+
+Fig.~\ref{fig:horse2zebra}, \ref{fig:sheep2giraffe},\ref{fig:elephant2zebra} demonstrate the performance of our method to compared to CycleGAN on the animals dataset. Our approach translates textures, colors, and geometry more consistently. InstaGAN did not converge in $200$ epochs for transfiguration tasks on the animals dataset.
+
+\begin{figure}[!hbpt]
+    \centering
+    \def\svgwidth{\columnwidth}
+    \import{figures/semgan/}{horse2zebra.pdf_tex}
+    \caption[Qualitative comparison of CycleGAN and our method on Horse $\leftrightarrow$Zebra]{Image to image translation task. Top: Horse $\to$ Zebra. Bottom: Zebra $\to$ Horse. Adding a label preserving loss aids the preservation of background and the translations of color, texture and geometry of the foreground object.}
+    \label{fig:horse2zebra}
+\end{figure}
+
+
+\begin{figure*}[!hbpt]
+    \centering
+    \def\svgwidth{\textwidth}
+        \import{figures/semgan/}{sheep2giraffe.pdf_tex}
+    \caption[Results on Sheep$\leftrightarrow$Giraffe.]{Results on Sheep$\leftrightarrow$Giraffe. Top: Sheep $\to$ Giraffe. Bottom: Giraffe $\to$ Sheep.}
+    \label{fig:sheep2giraffe}
+\end{figure*}
+
+
+\begin{figure*}[!hbpt]
+    \centering
+    \def\svgwidth{\textwidth}
+        \import{figures/semgan/}{elephant2zebra.pdf_tex}
+    \caption[Results on Elephant$\leftrightarrow$Zebra]{Results on Elephant$\leftrightarrow$Zebra}
+    \label{fig:elephant2zebra}
+\end{figure*}
+
+\subsubsection{Ablation Study on the Shapes Dataset}
+In Fig.~\ref{fig:geomablation} we present qualitative comparisons of ablations of our full objective on the shapes dataset. Removing the class preserving loss decreases the preservation of the background and the foreground object boundaries become more diluted. Removing the identity loss leaves the network to change the color of the objects and background and removing the cyclic consistency leads to artifacts in the foreground and background.
+
+\begin{figure}[!hbpt]
+    \centering
+    \def\svgwidth{\columnwidth}
+   \import{figures/semgan/}{geometryablation.pdf_tex}
+    \caption[Object transfiguration ablation study on the shapes dataset.]{Object transfiguration ablation study: (Top two rows) Squares $\to$ Triangles and triangles $\to$ Squares.}
+    \label{fig:geomablation}
+\end{figure}
+
+The cross-domain loss is critical to preserving the underlying semantics of a scene. Without the cross-domain loss, the generator is free to change the semantic labels in different spatial regions of the target image. We show such an example in Fig.~\ref{fig:domain_loss_gta_city}.
+\begin{figure*}[!hbpt]
+    \centering
+    \def\svgwidth{\textwidth}
+        \import{figures/semgan/}{domain_loss_gta_city.pdf_tex}
+    \caption[Qualitative analysis of the effects of cross-domain loss.]{Qualitative analysis of the effects of the proposed cross-domain loss. In the absence of the cross-domain loss, the generator is free to change the semantic labels in different spatial regions of the target image (middle row). With the addition of cross-domain loss such anomalies can be prevented (last row).}
+    \label{fig:domain_loss_gta_city}
+\end{figure*}
+
+\subsection{Domain Transfer Results}
+For domain transfer, we perform two sets of experiments. First, we transform red to green apples in orchard environments. Second, we perform synthetic $\to$ real domain translation experiments using the GTA~\cite{richter_playing_2016} $\to$ Cityscape~\cite{cordts_cityscapes_2016} dataset. For both these experiments, we demonstrate the effectiveness of our approach qualitatively and quantitatively.
+
+\subsubsection{Translation from Red to Green Apples}
+We translate between fruit trees in orchard settings, transforming red to green apples and vice versa. Fig.~\ref{fig:apple_dom_quality} shows example data and transfers. The goal of this experiment is to measure the effectiveness of using the translated data in training a semantic segmentation network.\\ 
+
+\noindent\textbf{Evaluation Metrics}\\\\
+We adopt the Fully Convolutional Network (FCN) score metrics from~\cite{cordts_cityscapes_2016} for quantitative evaluation. The FCN score evaluates the performance improvement when using translated images to train an off-the-shelf semantic segmentation network (e.g. U-Net~\cite{ronneberger_u-net:_2015}). The FCN predicts a semantic label map for an image that we compare to available ground truth data. If the translated images and labels are coherent and representative of the target domain, this should translate into higher FCN scores. On the other hand, any discrepancy between images and semantic labels will result in worse segmentation performance. To evaluate the performance, we use the standard metrics from~\cite{cordts_cityscapes_2016}, namely mean pixel accuracy, mean class accuracy and mean class Intersection over Union (IoU). To interpret the domain transfer results we define a few terms below:\\\\
+
+\textbf{Target} network is trained on the training data in the target domain $(y_j, c(y_j))$. Since this data is trained on the same distribution as our test data, it represents an oracle whose performance we aim to attain with the other methods.\\
+
+\textbf{Source} network is trained on the training data in the source domain $(x_i, c(x_i))$. Expectedly, this network will perform poorly when tested on the target domain due to the large domain gap.\\
+
+\textbf{Sem-GAN$_{50}$} uses all available data from the source domain $(x_i, c(x_i))$ and $50\%$ of the translated data $(\widehat{x_i}, \widehat{c(x_i)})$.\\
+
+\textbf{Sem-GAN$_{100}$} uses data from the source domain $(x_i, c(x_i))$ and $100\%$ of the translated data $(\widehat{x_i}, \widehat{c(x_i)})$. To offer a fair comparison, we implement each of these networks using the same architecture and hyper-parameters.\\
+
+We compare the networks' label predictions to the available ground truth label maps. Table~\ref{tab:green2red} and Table~\ref{tab:red2green} report performance of the four methods. In both translation cases, adding translated images to the test sets improves the performance when compared to the source only network. When adding all of the translated images to the source data, the network even outperforms the Oracle network in most of the cases.
+
+\begin{table}[!htpb]
+    \begin{center}
+    \begin{tabular}{c c c c}
+        \textbf{Loss} & \textbf{Pixel acc.} & \textbf{Class acc.} & \textbf{Class IoU} \\
+        \hline
+        Source & 0.89 & 0.51 & 0.46\\
+        Ours$_{50}$ & 0.98 & 0.96 & 0.90\\
+        Ours$_{100}$ & \textbf{0.98} & \textbf{0.97} & \textbf{0.91} \\
+        \hline
+        Target & 0.97 & 0.94 & 0.88
+    \end{tabular}
+    \end{center}
+    \caption{Classification performance of Red $\to$ Green fruit}
+    \label{tab:red2green}
+\end{table}
+
+\begin{table}[!htpb]
+    \begin{center}
+        \begin{tabular}{c c c c}
+            \textbf{Loss} & \textbf{Pixel acc.} & \textbf{Class acc.} & \textbf{Class IoU} \\
+            \hline
+            Source & 0.91 & 0.50 & 0.47 \\
+            Ours$_{50}$ & 0.98 & 0.95 & 0.89\\
+            Ours$_{100}$ & \textbf{0.99} & 0.98 & \textbf{0.95}\\
+            \hline
+            Target & 0.99 & \textbf{0.99} & 0.93  
+        \end{tabular}
+    \end{center}
+    \caption{Classification performance of Green $\to$ Red fruit}
+    \label{tab:green2red}
+\end{table}
+
+\begin{figure}[!hbpt]
+    \centering
+    \def\svgwidth{\columnwidth}
+    \import{figures/semgan/}{apple_quality.pdf_tex}
+    \caption[Qualitative results on red apples $\leftrightarrow$ green apples]{Domain transfer: red apples to green apples. We compare our network with and without cross domain preservation loss against CycleGAN. Our methods preserve the class labels, while CycleGAN adds fruit without changing the class label.}
+    \label{fig:apple_dom_quality}
+\end{figure}
+
+\subsubsection{Ablation Study on the Red$\leftrightarrow$Green Apple Translation Task}
+ 
+Table~\ref{tab:green2red_ablation} and Table~\ref{tab:red2green_ablation} show the ablation study on the Red $\to$ Green and Green $\to$ Red fruit translation task. We used the Target network from our FCN experiments as a noisy labeler and compare our translated label masks against the noisy labels. For CycleGAN, we assume that the underlying semantics of the image is not changed by the translation. We find that using only cyclic consistency reduces performance. This confirms our initial suspicion, that unsupervised image to image translation does not preserve the underlying semantic labels. The results of Sem-GAN without the cross-domain loss outperform the ones with the cross-domain loss. Sem-GAN without the domain loss introduces apple-like artifacts (See Fig.~\ref{fig:apple_dom_quality} top row, rightmost) which are detected by the U-Net as apples. To discourage the network from producing such artifacts, we recommend using the cross-domain loss.
+
+\begin{table}[!htpb]
+    \begin{center}
+        \begin{tabular}{c c c c}
+            \textbf{Loss} & \textbf{Pixel acc.} & \textbf{Class acc.} & \textbf{Class IoU} \\
+            \hline
+            CycleGAN~\cite{zhu_unpaired_2017} & 0.93 & 0.76 & 0.68 \\
+            \specialcell{Sem GAN w.o \\ cross domain loss} & \textbf{0.97} & \textbf{0.90} & \textbf{0.82} \\
+            \specialcell{Sem GAN w \\ cross domain loss} & 0.96 & 0.88 & 0.80
+        \end{tabular}
+    \end{center}
+    \caption{Ablation study: Classification performance of red$\to$ green fruit translation}
+    \label{tab:green2red_ablation}
+\end{table}
+
+\begin{table}[!htpb]
+    \begin{center}
+        \begin{tabular}{c c c c}
+            \textbf{Loss} & \textbf{Pixel acc.} & \textbf{Class acc.} & \textbf{Class IoU} \\
+            \hline
+            CycleGAN~\cite{zhu_unpaired_2017} & 0.93 & 0.84 & 0.66\\
+            \specialcell{Sem GAN w.o \\ cross domain loss} & 0.93 & \textbf{0.90} & \textbf{0.82} \\
+            \specialcell{Sem GAN w \\ cross domain loss} & \textbf{0.94} & 0.86 & 0.73
+        \end{tabular}
+    \end{center}
+    \caption{Ablation study: Classification performance of green $\to$ red fruit translation}
+    \label{tab:red2green_ablation}
+\end{table}
+
+\subsubsection{Results on GTA$\leftrightarrow$ Cityscape}
+One of the main advantages of our formulation is the ability to preserve semantic consistency throughout the translation process. However, for all the experiments so far our test cases only had singleton classes. In this experiment, our goal is to test how our approach performs in the presence of multiple classes. Fig.~\ref{fig:gtacityqual} shows qualitative examples of translation from GTA $\to$ Cityscape and vice versa. Our approach produces more semantically consistent and visually appealing results compared to CycleGAN. Table~\ref{tab:city} demonstrates that the effectiveness of the translated images quantitatively. It shows that a PSPNet~\cite{zhao2017pyramid} (trained on $1000$ translated images), performs better compared to the source only version when tested on the Cityscapes dataset.
+\begin{figure*}[!hbpt]
+    \centering
+    \def\svgwidth{\textwidth}
+    \import{figures/semgan/}{gta_city_quality.pdf_tex}
+    \caption[Qualitative results on GTA $\leftrightarrows$ CityScape.]{Domain transfer: GTA $\leftrightarrows$ CityScape. We show the performance of CycleGAN and our network. CycleGAN does not preserve underlying geometry and creates visual artifacts.}
+    \label{fig:gtacityqual}
+\end{figure*}
+
+\begin{table}[!htpb]
+    \begin{center}
+        
+            \begin{tabular}{c c c c}
+                \textbf{Loss} & \textbf{Pixel acc.} & {\textbf{Class acc.}} & \textbf{Class IoU}\\
+                \hline
+                Source only & 0.634 & 0.590 & 0.227 \\
+                CycleGAN    & 0.606 & 0.596 & 0.218 \\
+                Ours        & \textbf{0.675} & \textbf{0.616} &  \textbf{0.270} \\
+                \hline
+                Target only & 0.892 & 0.735 & 0.488 \\
+            \end{tabular}
+    \end{center}
+    \caption[Quantitative results on GTA $\to$ Cityscapes]{Quantitative results on GTA $\to$ Cityscapes. We show that a PSPNet (trained on $1000$ translated images), performs better when tested on Cityscapes test set.}
+    \label{tab:city}
+\end{table}
+
+
+To understand how semantic information helps the translation process, we trained a variant of our network with access to only a subset of the underlying semantic information (people, cars, roads, and background). Fig.~\ref{fig:semantic_effects} shows that the translated images from this network contain visual artifacts similar to CycleGAN (buildings merged into the sky).
+\begin{figure*}[!hbpt]
+    \centering
+    \def\svgwidth{\textwidth}
+    \import{figures/semgan/}{semantic_effects.pdf_tex}
+    \caption[Effects of preserving semantics]{Variants of our network, trained with only partial or full class preservation. From top to bottom: Input image and semantic label, our network trained to preserve only classes [car, person, road] and our network trained to preserve all $19$ classes. When only preserving a subset of the classes the network generates visual artifacts, similar to CycleGAN.}
+    \label{fig:semantic_effects}
+\end{figure*}
+
+\subsection{Additional Results}
+In this section, we present additional qualitative results and comparisons on previously introduced datasets. Specifically, we present additional results for the GTA $\leftrightarrow$ Cityscapes, object transfiguration results on the shapes dataset and for the Horse$\leftrightarrow$Zebra transfiguration task.
+
+\begin{figure*}[!hbpt]
+    \centering
+    \def\svgwidth{\textwidth}
+        \import{figures/semgan/}{gta_city_quality_supp.pdf_tex}
+    \caption[Additional results on GTA $\to$ CityScape.]{Domain transfer: Additional results on GTA $\to$ CityScape. We show the performance of CycleGAN and our network. CycleGAN does not preserve the underlying geometry and creates visual artifacts due to switches in class labels.}
+    \label{fig:gtaqual_supp}
+\end{figure*}
+
+
+\begin{figure*}[!hbpt]
+    \centering
+    \def\svgwidth{\textwidth}
+        \import{figures/semgan/}{cityscape_quality_supp.pdf_tex}
+    \caption[Additional results on  CityScape $\to$ GTA.]{Additional examples of domain transfer from CityScape $\to$ GTA. Similar to Fig.~\ref{fig:gtaqual_supp}, we compare the performance of CycleGAN and our network. Again, CycleGAN does not preserve the underlying geometry and creates visual artifacts due to switches in class labels.}
+    \label{fig:cityqual_supp}
+\end{figure*}
+
+
+\begin{figure*}[!htbp]
+    \centering
+    \begin{subfigure}[b]{\textwidth}
+        \def\svgwidth{\textwidth}
+            \import{figures/semgan/}{geometry_quality_supp.pdf_tex}
+        \caption{Top three rows: Transforming circles into triangles, center three rows: Squares into triangles and bottom three rows: Squares into circles.}
+        \label{fig:geomaquality_supp}
+    \end{subfigure}
+    %\caption{}
+    \end{figure*}
+    \newpage
+    \begin{figure*}[!htbp]\ContinuedFloat
+    \begin{subfigure}[b]{\textwidth}
+        \def\svgwidth{\textwidth}
+            \import{figures/semgan/}{geometry_quality_opp_supp.pdf_tex}
+        \caption{Top three rows: Transforming triangles into circles, center three rows: Triangles into squares and bottom three rows: Circles into squares.}
+        \label{fig:geomaquality_op_supp}
+    \end{subfigure}
+    \caption[Additional qualitative results for the shapes dataset]{We show additional qualitative comparisons of CycleGAN, InstaGAN and our method. We can see that our method transforms foreground objects more concisely. InstaGAN translation of the label masks in the Squares $\to$ Triangle case (center rows) leads to mode collapse. CycleGAN suffers from visual artifacts. CycleGAN and InstaGAN both struggle when the network has to generate object contours that are larger than the original objects (triangle to squares).}
+\end{figure*}
+
+%\newpage
+
+\begin{figure*}[hbpt]
+    \centering
+     \begin{subfigure}[b]{\textwidth}
+     \centering
+    \def\svgwidth{\textwidth}
+       \import{figures/semgan/}{horse2zebra_supp.pdf_tex}
+       \end{subfigure}
+       %\caption{}
+       \label{fig:horse2zebra_supp}
+       \end{figure*}
+    \newpage
+    \begin{figure*}[!htbp]\ContinuedFloat
+       \begin{subfigure}[b]{\textwidth}
+     \centering
+    \def\svgwidth{\textwidth}
+       \import{figures/semgan/}{zebra2horse_supp.pdf_tex}
+       \end{subfigure}
+    \caption[Additional results on Horse$\leftrightarrow$Zebra.]{Additional results on Horse$\leftrightarrow$Zebra. Top: Horse $\to$ Zebra. Bottom: Zebra $\to$ Horse. As noted before, adding a label preserving loss aids the preservation of background and the translations of color, texture and geometry of the foreground object.}
+\end{figure*}
+
+
+
+
+\section{Limitations and Discussion}\label{sec:semgan_conc}
+
+In this chapter, we presented an unsupervised image to image translation network which can transfer semantic labels consistently. In object transfiguration tasks, the network preserved not only the class maps but also generated more detailed results on the image level.
+In the domain translation experiments, our method's label preservation mechanism reduces visual artifacts. For example, in contrast to CycleGAN, we observed no random permutations of objects in the scene (changing vegetation to buildings, etc.). In the GTA $\to$ Cityscape experiment our cross-domain loss prevented similar failures from happening.
+
+\begin{figure}[!hbpt]
+    \centering
+    \def\svgwidth{\columnwidth}
+    \import{figures/semgan/}{failure_cases.pdf_tex}
+    \caption[Typical failure cases of our approach.]{Typical failure cases of our approach. Top: in the multi circle to triangle task SemGAN cannot establish a foreground/background relationship between the objects. Center: Again in the object transfiguration task, SemGAN does not properly assign the colors of the foreground objects. The classes, in this case, are preserved. Bottom: In the Cityscape $\to$ GTA domain translation task the network introduces artifacts in the image (top red box). SemGAN also fails to preserve the stop sign class.}
+    \label{fig:failure_cases}
+\end{figure}
+
+However, when there is a significant overlap between individual instances, the network sometimes produced visual artifacts as shown in Fig.~\ref{fig:failure_cases}.
+To address this limitation, we would like to extend our method to use instance-level information as well. Additionally, we would like to develop methods that do not require labels from the target domain.

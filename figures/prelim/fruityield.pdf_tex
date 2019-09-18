@@ -1,0 +1,75 @@
+%% Creator: Inkscape inkscape 0.92.4, www.inkscape.org
+%% PDF/EPS/PS + LaTeX output extension by Johan Engelen, 2010
+%% Accompanies image file 'fruityield.pdf' (pdf, eps, ps)
+%%
+%% To include the image in your LaTeX document, write
+%%   \input{<filename>.pdf_tex}
+%%  instead of
+%%   \includegraphics{<filename>.pdf}
+%% To scale the image, write
+%%   \def\svgwidth{<desired width>}
+%%   \input{<filename>.pdf_tex}
+%%  instead of
+%%   \includegraphics[width=<desired width>]{<filename>.pdf}
+%%
+%% Images with a different path to the parent latex file can
+%% be accessed with the `import' package (which may need to be
+%% installed) using
+%%   \usepackage{import}
+%% in the preamble, and then including the image with
+%%   \import{<path to file>}{<filename>.pdf_tex}
+%% Alternatively, one can specify
+%%   \graphicspath{{<path to file>/}}
+%% 
+%% For more information, please see info/svg-inkscape on CTAN:
+%%   http://tug.ctan.org/tex-archive/info/svg-inkscape
+%%
+\begingroup%
+  \makeatletter%
+  \providecommand\color[2][]{%
+    \errmessage{(Inkscape) Color is used for the text in Inkscape, but the package 'color.sty' is not loaded}%
+    \renewcommand\color[2][]{}%
+  }%
+  \providecommand\transparent[1]{%
+    \errmessage{(Inkscape) Transparency is used (non-zero) for the text in Inkscape, but the package 'transparent.sty' is not loaded}%
+    \renewcommand\transparent[1]{}%
+  }%
+  \providecommand\rotatebox[2]{#2}%
+  \newcommand*\fsize{\dimexpr\f@size pt\relax}%
+  \newcommand*\lineheight[1]{\fontsize{\fsize}{#1\fsize}\selectfont}%
+  \ifx\svgwidth\undefined%
+    \setlength{\unitlength}{799.60110946bp}%
+    \ifx\svgscale\undefined%
+      \relax%
+    \else%
+      \setlength{\unitlength}{\unitlength * \real{\svgscale}}%
+    \fi%
+  \else%
+    \setlength{\unitlength}{\svgwidth}%
+  \fi%
+  \global\let\svgwidth\undefined%
+  \global\let\svgscale\undefined%
+  \makeatother%
+  \begin{picture}(1,0.84201897)%
+    \lineheight{1}%
+    \setlength\tabcolsep{0pt}%
+    \put(0,0){\includegraphics[width=\unitlength,page=1]{fruityield.pdf}}%
+    \put(-0.00057539,0.66133016){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}Original ImageSegmented ImageReprojected Image\\3D Reconstruction\\Segmented Point Cloud\\3D Connected Components\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=2]{fruityield.pdf}}%
+    \put(0.26067694,0.7826836){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}Intersection\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=3]{fruityield.pdf}}%
+    \put(0.93424063,0.26393139){\color[rgb]{0,1,0}\makebox(0,0)[lt]{\lineheight{0}\smash{\begin{tabular}[t]{l}\textbf{-1}\end{tabular}}}}%
+    \put(0.83384743,0.24972307){\color[rgb]{0,1,0}\makebox(0,0)[lt]{\lineheight{0}\smash{\begin{tabular}[t]{l}\textbf{-1}\end{tabular}}}}%
+    \put(0.74880502,0.24472058){\color[rgb]{0,1,0}\makebox(0,0)[lt]{\lineheight{0}\smash{\begin{tabular}[t]{l}\textbf{-1}\end{tabular}}}}%
+    \put(0.61473816,0.23771709){\color[rgb]{0,1,0}\makebox(0,0)[lt]{\lineheight{0}\smash{\begin{tabular}[t]{l}\textbf{-1}\end{tabular}}}}%
+    \put(0.61173666,0.20169912){\color[rgb]{0,1,0}\makebox(0,0)[lt]{\lineheight{0}\smash{\begin{tabular}[t]{l}\textbf{-1}\end{tabular}}}}%
+    \put(0.33359796,0.24572108){\color[rgb]{0,1,0}\makebox(0,0)[lt]{\lineheight{0}\smash{\begin{tabular}[t]{l}\textbf{-1}\end{tabular}}}}%
+    \put(0.27656952,0.32476049){\color[rgb]{0,1,0}\makebox(0,0)[lt]{\lineheight{0}\smash{\begin{tabular}[t]{l}\textbf{-1}\end{tabular}}}}%
+    \put(0.23154707,0.27373505){\color[rgb]{0,1,0}\makebox(0,0)[lt]{\lineheight{0}\smash{\begin{tabular}[t]{l}\textbf{-1}\end{tabular}}}}%
+    \put(0.16751514,0.319758){\color[rgb]{0,1,0}\makebox(0,0)[lt]{\lineheight{0}\smash{\begin{tabular}[t]{l}\textbf{-1}\end{tabular}}}}%
+    \put(0.17852063,0.27673654){\color[rgb]{0,1,0}\makebox(0,0)[lt]{\lineheight{0}\smash{\begin{tabular}[t]{l}\textbf{-1}\end{tabular}}}}%
+    \put(0.05245777,0.23571609){\color[rgb]{0,1,0}\makebox(0,0)[lt]{\lineheight{0}\smash{\begin{tabular}[t]{l}\textbf{-1}\end{tabular}}}}%
+    \put(0.16151215,0.10565123){\color[rgb]{0,1,0}\makebox(0,0)[lt]{\lineheight{0}\smash{\begin{tabular}[t]{l}\textbf{-1}\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=4]{fruityield.pdf}}%
+  \end{picture}%
+\endgroup%

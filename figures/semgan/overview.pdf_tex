@@ -1,0 +1,94 @@
+%% Creator: Inkscape inkscape 0.92.4, www.inkscape.org
+%% PDF/EPS/PS + LaTeX output extension by Johan Engelen, 2010
+%% Accompanies image file 'overview.pdf' (pdf, eps, ps)
+%%
+%% To include the image in your LaTeX document, write
+%%   \input{<filename>.pdf_tex}
+%%  instead of
+%%   \includegraphics{<filename>.pdf}
+%% To scale the image, write
+%%   \def\svgwidth{<desired width>}
+%%   \input{<filename>.pdf_tex}
+%%  instead of
+%%   \includegraphics[width=<desired width>]{<filename>.pdf}
+%%
+%% Images with a different path to the parent latex file can
+%% be accessed with the `import' package (which may need to be
+%% installed) using
+%%   \usepackage{import}
+%% in the preamble, and then including the image with
+%%   \import{<path to file>}{<filename>.pdf_tex}
+%% Alternatively, one can specify
+%%   \graphicspath{{<path to file>/}}
+%% 
+%% For more information, please see info/svg-inkscape on CTAN:
+%%   http://tug.ctan.org/tex-archive/info/svg-inkscape
+%%
+\begingroup%
+  \makeatletter%
+  \providecommand\color[2][]{%
+    \errmessage{(Inkscape) Color is used for the text in Inkscape, but the package 'color.sty' is not loaded}%
+    \renewcommand\color[2][]{}%
+  }%
+  \providecommand\transparent[1]{%
+    \errmessage{(Inkscape) Transparency is used (non-zero) for the text in Inkscape, but the package 'transparent.sty' is not loaded}%
+    \renewcommand\transparent[1]{}%
+  }%
+  \providecommand\rotatebox[2]{#2}%
+  \newcommand*\fsize{\dimexpr\f@size pt\relax}%
+  \newcommand*\lineheight[1]{\fontsize{\fsize}{#1\fsize}\selectfont}%
+  \ifx\svgwidth\undefined%
+    \setlength{\unitlength}{1451.91984547bp}%
+    \ifx\svgscale\undefined%
+      \relax%
+    \else%
+      \setlength{\unitlength}{\unitlength * \real{\svgscale}}%
+    \fi%
+  \else%
+    \setlength{\unitlength}{\svgwidth}%
+  \fi%
+  \global\let\svgwidth\undefined%
+  \global\let\svgscale\undefined%
+  \makeatother%
+  \begin{picture}(1,0.21281599)%
+    \lineheight{1}%
+    \setlength\tabcolsep{0pt}%
+    \put(0,0){\includegraphics[width=\unitlength,page=1]{overview.pdf}}%
+    \put(0.14806161,0.081506){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{0}\smash{\begin{tabular}[t]{l}$c(y_j)$\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=2]{overview.pdf}}%
+    \put(0.15558492,0.20339688){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{0}\smash{\begin{tabular}[t]{l}D$_Y$\end{tabular}}}}%
+    \put(0.00772052,0.2027901){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{0}\smash{\begin{tabular}[t]{l}D$_X$\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=3]{overview.pdf}}%
+    \put(0.07073788,0.16666261){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{0}\smash{\begin{tabular}[t]{l}\textbf{F}\end{tabular}}}}%
+    \put(0.15773957,0.13768293){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{0}\smash{\begin{tabular}[t]{l}$y_j$\end{tabular}}}}%
+    \put(0.00190538,0.08195222){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{0}\smash{\begin{tabular}[t]{l}$c(x_i)$\end{tabular}}}}%
+    \put(0.01087572,0.13626087){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{0}\smash{\begin{tabular}[t]{l}$x_i$\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=4]{overview.pdf}}%
+    \put(0.85027645,0.20196877){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{0}\smash{\begin{tabular}[t]{l}D$_Y$\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=5]{overview.pdf}}%
+    \put(0.22086012,0.08187153){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{0}\smash{\begin{tabular}[t]{l}$c(x_i)$\end{tabular}}}}%
+    \put(0.22936947,0.13789648){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{0}\smash{\begin{tabular}[t]{l}$x_i$\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=6]{overview.pdf}}%
+    \put(0.34306738,0.11698691){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{0}\smash{\begin{tabular}[t]{l}F$_E$\end{tabular}}}}%
+    \put(0.42535007,0.13863251){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{0}\smash{\begin{tabular}[t]{l}F$_{D_x}$\end{tabular}}}}%
+    \put(0.42443654,0.07390237){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{0}\smash{\begin{tabular}[t]{l}F$_{D_c}$\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=7]{overview.pdf}}%
+    \put(0.51738795,0.07896551){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{0}\smash{\begin{tabular}[t]{l}$\widehat{c(y_i)}$\end{tabular}}}}%
+    \put(0.53029792,0.13556447){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{0}\smash{\begin{tabular}[t]{l}$\widehat{y_i}$\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=8]{overview.pdf}}%
+    \put(0.33662269,0.18390089){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{0}\smash{\begin{tabular}[t]{l}\textbf{F}\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=9]{overview.pdf}}%
+    \put(0.51795899,0.20053778){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{0}\smash{\begin{tabular}[t]{l}D$_Y$\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=10]{overview.pdf}}%
+    \put(0.58510634,0.17616847){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{0}\smash{\begin{tabular}[t]{l}$(\mathcal{X \times C_X})$\end{tabular}}}}%
+    \put(0.82440116,0.15361443){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{0}\smash{\begin{tabular}[t]{l}$(\mathcal{Y \times C_Y})$\end{tabular}}}}%
+    \put(0.58373935,0.10542699){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}\tiny $\begin{cases} (x_i,c(x_i)) \approx \\ G(F(x_i,c(x_i))) \end{cases}$\end{tabular}}}}%
+    \put(0.07073811,0.07192645){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{0}\smash{\begin{tabular}[t]{l}\textbf{G}\end{tabular}}}}%
+    \put(0.73711533,0.17022281){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{0}\smash{\begin{tabular}[t]{l}\textbf{F}\end{tabular}}}}%
+    \put(0.7371156,0.03576639){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{0}\smash{\begin{tabular}[t]{l}\textbf{G}\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=11]{overview.pdf}}%
+    \put(0.0941791,0.00166911){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{0}\smash{\begin{tabular}[t]{l}(a)\end{tabular}}}}%
+    \put(0.38450882,0.00163442){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{0}\smash{\begin{tabular}[t]{l}(b)\end{tabular}}}}%
+    \put(0.74633587,0.00275373){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{0}\smash{\begin{tabular}[t]{l}(c)\end{tabular}}}}%
+  \end{picture}%
+\endgroup%

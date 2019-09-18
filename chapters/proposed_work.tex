@@ -1,0 +1,65 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% oscillation_analysis.tex: Analysis of Neutrino Oscillations:
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Proposed Work and Thesis Completion Timeline}
+\label{chapter:proposed_work}
+ In this proposal, we presented a semi-supervised and fully supervised technique for detecting fruits; an unsupervised clustering method for counting the fruits from images (based on shape); view planning strategies to accurately count fruits in a minimum number of views; and a technique for using the fruits themselves as features to recover the underlying scene geometry and camera poses. In addition, we presented techniques to merge independent 3D reconstructions from both sides of a fruit tree row for perfect tracking and computing the overall yield. Our developed algorithms can successfully detect $97\%$ of the visible fruits and map $96\%$ of the total fruit yield. Our findings indicate that deep learning solutions for fruit detection and counting are more general and can be translated easily to different domains. A trained network though is as good as the training data and obtaining such data for specialty crops is difficult.
+
+Therefore, to complete this dissertation, I propose to generate semantics preserving synthetic data for the purpose of training deep networks. State-of-the-art image to image translation methods fails when the mapping function includes significant geometric changes~\cite{zhu_unpaired_2017}. For example, if the transformation requires mapping squares to skinny triangles. This failure can be attributed to the fact that these methods do not take the underlying representation of the scene into consideration, and therefore make arbitrary changes to the appearance and geometry of the input. While this approach can be acceptable for image style transfer for artistic purposes, it is insufficient when the relationship between an image and its semantic labels needs to be preserved - such as in the case of domain adaptation or semantic segmentation. By preserving the class labels during the translation process we can improve the performance of existing semantic segmentation networks and generate qualitatively improved outputs. Toward this goal, we present \emph{SemGAN,} an encoder-decoder based generator architecture that can translate both the input image and corresponding semantic label map to the target domain simultaneously. The generator is divided into an encoder to jointly encode image and class information and two decoders to generate the target image and class labels. The discriminator operates on the joint encoding of the image and class labels. For object transfiguration tasks, we propose an additional loss term that encourages image background preservation. In the following sections, we briefly present the problem formulation and network architecture. We end this chapter with a timeline for the completion of this research and the dissertation.
+
+
+\begin{figure*}[!htbp]
+    \centering
+    \def\svgwidth{\textwidth}
+    \import{figures/semgan/}{intro.pdf_tex}
+    \caption{Given two unpaired image collections and semantic label masks, our network learns a mapping to translate images from one domain to the other while preserving the labels. Top left: Object transfiguration task for circles to triangles. Top right: Image to image style transfer from Horses to Zebras. Bottom: Domain translation from synthetic GTA to Cityscapes photos. The examples show the CycleGAN~\cite{zhu_unpaired_2017} output, the image and mask outputs of our method. Note that CycleGAN does not output masks.\label{fig:intro}}
+    
+\end{figure*}
+
+
+\section{Problem Formulation}
+Given, two image domains $\mathcal{X}, \mathcal{Y}$, and unpaired training samples $\{x_i\}_{i=1}^N, \{y_j\}_{j=1}^M$ where $x_i\in \mathcal{X}, y_j \in \mathcal{Y}$, unsupervised image to image translation aims to learn a mapping $F:\mathcal{X}\to\mathcal{Y}$ between the two domains. Let $x,y$ denote the sample distributions from $\mathcal{X},\mathcal{Y}$ (i.e $x\sim p_{data}(\mathcal{X}), y \sim p_{data}(\mathcal{Y})$). The goal of the mapping is to fool an adversarial discriminator $D_Y$ so that it cannot distinguish between $\{F(x)\}$ and $\{y\}$. In other words, the objective of the mapping is to fool the discriminator into thinking that $F(x) \sim p_{data}(\mathcal{Y})$.
+
+\begin{figure*}[!hbpt]
+    \centering
+    \def\svgwidth{\textwidth}
+    \import{figures/semgan/}{overview.pdf_tex}
+    \caption{ (a) Our model learns two mapping functions $F: (\mathcal{X \times C_X}) \to (\mathcal{Y \times C_Y})$ and $G: (\mathcal{Y \times C_Y}) \to (\mathcal{X \times C_X})$ together with the associated adversarial discriminators $D_X$ and $D_Y$. $D_X$ encourages F to translate images and masks to be indistinguishable from samples in domain $(\mathcal{Y \times C_Y})$ and vice versa for $D_X$ and G. (b) We use an encoder $F_E$ to encode the stacked image and the semantic map. The latent representations are decoded separately in $F_{D_x}$ and $F_{D_c}$ to get a translated representation $(\widehat{x_i},\widehat{c(x_i)}) = F(x_i, c(x_i))$. (c) An example object transfiguration task where our network translates squares into triangles while preserving the background and maintaining the consistency between the mask and the image.\label{fig:overview_prop}}
+    
+\end{figure*}
+In this proposed work, we extend the formulation of unsupervised image to image translation to contain semantic information as well. Our goal is to learn a transfer function to jointly translate an image and its underlying semantics. Let each image in  domains $\mathcal{X}$ and $\mathcal{Y}$ be associated with a class map $\mathcal{C_X}$ and $\mathcal{C_Y}$, where each pixel in these class maps belongs to one and only one of the classes $C_1, ..., C_k$. Accordingly, their joint distributions can be represented by $\left(\mathcal{ X \times C_X}\right)$ and $\left(\mathcal{Y \times C_Y}\right)$.  Given independently sampled images and corresponding class labels $\{x_i,c(x_i)\}_{i=1}^N, \{y_j,c(y_j)\}_{j=1}^M$ where  $(x_i,c(x_i)) \in \left(\mathcal{ X \times C_X}\right), (y_j,c(y_j)) \in \left(\mathcal{ Y \times C_Y}\right)$, our goal is to learn a transfer function $F:\left(\mathcal{ X \times C_X}\right) \to \left(\mathcal{ Y \times C_Y}\right)$ that fools an adversarial discriminator $D_Y$, presuming $\{F(x,c(x))\} \sim p_{data}(\mathcal{ Y \times C_Y})$. Our objective contains the standard adversarial and cycle-consistency loss proposed by~\cite{goodfellow_generative_2014, zhu_unpaired_2017} and we add task specific losses for \textit{object transfiguration} and \textit{cross domain semantic consistency}. 
+
+\subsection{Sem-GAN Architecture:}
+The GAN formulation is a two network minimax game. The generator ($F$) is trying to minimize $D_Y(F(x,c(x))$ -the probability of the generated samples being adjudicated fake by the discriminator. At the same time, the discriminator $D_Y$ is trying to maximize the probability of detecting the real samples $D_Y(y,c(y))$. 
+
+For the generator $F$ we use an encoder-decoder architecture. $F$ consists of three networks - an encoder $F_E$ which jointly encodes the image and underlying semantics, a decoder $F_{D_{x}}$ for generating the image and another decoder $F_{D_{c}}$ for generating the semantic labels. The discriminator is a single network that encodes the image and class labels jointly, outputting the probability of the sample under observation is real. 
+
+Optimizing this adversarial objective is difficult and can lead to mode collapse (all inputs are mapped to a single output)~\cite{goodfellow_generative_2014}. To avoid this problem, CycleGAN~\cite{zhu_unpaired_2017} proposed a cyclic consistency loss. In cyclic consistency, two mappings $F(\mathcal{X} \to \mathcal{Y})$ and $G(\mathcal{Y} \to \mathcal{X})$ are learned simultaneously. Enforcing this cyclic consistency encourages $(F(G(x) \approx x$ and $G(F(y)) \approx y)$, adds more structure to the objective and avoids mode collapse. We leverage this approach while building Sem-GAN. We train two coupled mappings $F:\left(\mathcal{ X \times C_X}\right) \to \left(\mathcal{ Y \times C_Y}\right)$, $G:\left(\mathcal{ Y \times C_Y}\right) \to \left(\mathcal{ X \times C_X}\right)$ and two discriminators $D_X, D_Y$ simultaneously. 
+
+\section{Thesis Completion Objectives and Timeline}
+For the completion of this thesis I plan to fulfill the following objectives:
+
+\begin{table}[!h]
+\centering
+\begin{tabular}{|c|c|}
+\hline 
+\rule[-1ex]{0pt}{2.5ex} \supemph{Objective} & \supemph{Completion}  \\ 
+\hline 
+\rule[-1ex]{0pt}{2.5ex} \#1 & May 2019 (Completed)\\ 
+\hline 
+\rule[-1ex]{0pt}{2.5ex} \#2 & May 2019 (Completed)\\ 
+\hline 
+\rule[-1ex]{0pt}{2.5ex} \#3 & May 2019 (Completed) \\ 
+\hline 
+\rule[-1ex]{0pt}{2.5ex} \#4 & August 2019 \\ 
+\hline 
+\end{tabular} 
+\caption{Thesis Completion Timeline}
+\label{tab:thesis_time}
+\end{table}
+\begin{enumerate}
+    \item Complete the implementation of the aforementioned network for semantics preserving data generation.
+    \item Test the above formulation on different domains beyond agriculture such as arbitrary geometric object transfiguration, generating data for autonomous driving, etc.
+    \item Submit a manuscript to top-tier computer vision conference.
+    \item Write my dissertation using all the aforementioned work.
+\end{enumerate}

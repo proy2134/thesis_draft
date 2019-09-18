@@ -1,0 +1,30 @@
+% Physics constants
+\newcommand{\C}{{\mathrm{c}}}
+\DeclareMathOperator*{\bigO}{\mathcal{O}}
+\newcommand{\argmax}[1]{\underset{#1}{\operatorname{arg}\,\operatorname{max}}\;}
+%\newcommand{\argmin}[1]{\underset{#1}{\operatorname{arg}\,\operatorname{min}}\;}
+\newcommand{\argmin}{\operatornamewithlimits{argmin}}
+
+\def\presuper#1#2%
+  {\mathop{}%
+   \mathopen{\vphantom{#2}}^{#1}%
+   \kern-\scriptspace%
+   #2}
+% Add space between rows of tables
+\newcommand{\spacerows}[1]{\renewcommand{\arraystretch}{#1}}
+
+
+% Define a better looking eV by moving the V slightly left
+\DeclareSIUnit\electronvolt{e\hspace{-0.08em}V}
+\DeclarePairedDelimiter{\ceil}{\lceil}{\rceil}
+\newcommand{\supemph}[1]{\textbf{\emph {#1}}}
+ 
+\newcommand{\todo}{\textcolor{red}}
+ 
+\newcommand*\rot{\rotatebox{90}}
+\usepackage{color, colortbl}
+\definecolor{Gray}{gray}{0.9}
+\newcolumntype{g}{>{\columncolor{Gray}}c}
+
+\newcommand{\specialcell}[2][c]{%
+	\begin{tabular}[#1]{@{}c@{}}#2\end{tabular}}
